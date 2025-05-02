@@ -1,6 +1,7 @@
 import datetime
+import dateutil.tz
 
-import tda
+import schwabdev
 
 from enum import Enum
 
@@ -20,25 +21,24 @@ class TradeRelativeTime:
 
 
 class Calendar:
-    def __init__(self, td: tda):
-        self.startDate = datetime.date.today()
+    def __init__(self, td: schwabdev, timezone: str = "America/Chicago"):
+        self._startDate = datetime.date.today()
 
-        self._currentTime = datetime.datetime.now()
+        self._timezone = dateutil.tz.gettz(timezone)
+        self._currentTime = datetime.datetime.now(self._timezone)
 
         self._td = td
 
         self._marketDay = TradeRelativeDay.Status.nonTradingDay
         self._marketTime = TradeRelativeTime.Status.marketClosedToday
 
-        self.getStatus()
+        self.updateStatus()
 
-    def action(self, func):
-        def wrapper():
-            self._currentTime = datetime.datetime.now()
-            func()
-        return wrapper
+    def updateTime(self):
+        self._currentTime = datetime.datetime.now(self._timezone)
 
     def getMarketDay(self):
+        self.updateStatus()
         return self._marketDay
 
     def setMarketDay(self, status: TradeRelativeDay.Status):
@@ -48,6 +48,7 @@ class Calendar:
             self._marketTime = TradeRelativeTime.Status.marketClosedToday
 
     def getMarketTime(self):
+        self.updateStatus()
         return self._marketTime
 
     def setMarketTime(self, status: TradeRelativeTime.Status):
@@ -58,9 +59,9 @@ class Calendar:
         else:
             self._marketDay = TradeRelativeDay.Status.tradingDay
 
-    @action
-    def getStatus(self):
-        mkt = tda.client.Client.Markets.EQUITY
+    def updateStatus(self):
+        self.updateTime()
+        mkt = schwabdev.client.Client.Markets.EQUITY
 
         resp = self._td.client.get_hours_for_single_market(mkt, self._currentTime)
 
@@ -78,3 +79,13 @@ class Calendar:
 
         if hours is None:
             self.setMarketTime(TradeRelativeTime.Status.marketClosedToday)
+        else:
+            openTime = datetime.datetime.fromisoformat(hours['regularMarket'][0]['start'])
+            closeTime = datetime.datetime.fromisoformat(hours['regularMarket'][0]['end'])
+
+            if self._currentTime < openTime:
+                self.setMarketTime(TradeRelativeTime.Status.preMarket)
+            elif self._currentTime > closeTime:
+                self.setMarketTime(TradeRelativeTime.Status.afterMarket)
+            else:
+                self.setMarketTime(TradeRelativeTime.Status.marketOpen)
