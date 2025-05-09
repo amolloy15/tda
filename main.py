@@ -4,11 +4,13 @@ import logging
 import os
 import platform
 
-import schwabdev
+from schwab.auth import easy_client
 
 from utils.calendar import Calendar
 from utils.job import Job
 from utils.scheduler import Scheduler
+
+logger = logging.getLogger(__name__)
 
 
 def load_schedules(cal: Calendar):
@@ -32,21 +34,44 @@ def load_schedules(cal: Calendar):
     return schedules
 
 
+def load_schedules_dumb(cal, sc) -> list:
+    from schedules.testing import TestScheduler
+    from schedules.twoday import TwoDaySPYTrader
+    # return [TestScheduler(), TwoDaySPYTrader(cal, sc)]
+    return [TestScheduler()]
+
+
+def get_client():
+    api_key = os.environ['app_key']
+    app_secret = os.environ['app_secret']
+    callback_url = os.environ['callback_url']
+    token_path = '/tmp/token.json'
+
+    return easy_client(api_key, app_secret, callback_url, token_path)
+
+
 def main():
-    logger = logging.getLogger()
     if platform.system() == 'Darwin':
-        logger.setLevel(logging.DEBUG)
+        level = logging.DEBUG
     else:
-        logger.setLevel(logging.INFO)
+        level = logging.INFO
+
+    fmt = '%(asctime)s: %(message)s'
+    logging.basicConfig(filename='log.log', level=level, format=fmt)
 
     logger.info('Starting trading app')
 
-    client = schwabdev.Client('key', 'secret')
+    client = get_client()
+    logger.debug('Initialized client')
 
     cal = Calendar(client)
     scheduler = Scheduler(cal)
 
+    for sched in load_schedules_dumb(cal, client):
+        scheduler.addJob(sched)
+
     try:
+        logger.info('Beginning scheduler loop')
         scheduler.run()
     except KeyboardInterrupt:
         print('Ending')
