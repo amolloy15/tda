@@ -1,9 +1,12 @@
 import datetime
 import dateutil.tz
+import logging
 
-import schwabdev
+import schwab
 
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class TradeRelativeDay:
@@ -21,13 +24,13 @@ class TradeRelativeTime:
 
 
 class Calendar:
-    def __init__(self, td: schwabdev, timezone: str = "America/Chicago"):
+    def __init__(self, sc: schwab.client, timezone: str = "America/Chicago"):
         self._startDate = datetime.date.today()
 
         self._timezone = dateutil.tz.gettz(timezone)
         self._currentTime = datetime.datetime.now(self._timezone)
 
-        self._td = td
+        self._client: schwab.client = sc
 
         self._marketDay = TradeRelativeDay.Status.nonTradingDay
         self._marketTime = TradeRelativeTime.Status.marketClosedToday
@@ -61,9 +64,9 @@ class Calendar:
 
     def updateStatus(self):
         self.updateTime()
-        mkt = schwabdev.client.Client.Markets.EQUITY
+        mkt = schwab.client.Client.MarketHours.Market.EQUITY
 
-        resp = self._td.client.get_hours_for_single_market(mkt, self._currentTime)
+        resp = self._client.get_market_hours(mkt, date=self._currentTime.date())
 
         assert resp.status_code == 200
 
@@ -89,3 +92,5 @@ class Calendar:
                 self.setMarketTime(TradeRelativeTime.Status.afterMarket)
             else:
                 self.setMarketTime(TradeRelativeTime.Status.marketOpen)
+
+        logger.debug(f'Market status: {self._marketDay}, {self._marketTime}')

@@ -2,7 +2,7 @@ import datetime
 import dateutil.tz
 
 from cron_converter import Cron
-from schwabdev import Client as SchwabClient
+from schwab import client as SchwabClient
 from typing import Optional
 
 from utils.calendar import Calendar
@@ -10,7 +10,7 @@ from utils.scheduler import Scheduler
 
 
 class Job:
-    def __init__(self, cal: Calendar, sdc: SchwabClient, baseSchedule: Optional[Cron] = None):
+    def __init__(self, cal: Calendar, sc: SchwabClient, baseSchedule: Optional[Cron] = None):
 
         self.active = False
 
