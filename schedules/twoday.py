@@ -1,7 +1,7 @@
 import datetime
 
 from cron_converter import Cron
-from schwabdev import Client as SchwabClient
+from schwab import auth, client
 from typing import Any, Dict, List
 
 from utils.calendar import Calendar
@@ -10,9 +10,9 @@ from utils.scheduler import Scheduler
 
 
 class TwoDaySPYTrader(Job):
-    def __init__(self, cal: Calendar, sdc: SchwabClient):
+    def __init__(self, cal: Calendar, sc: client):
         cronSchedule = '30 8 * * *'
-        super().__init__(cal, sdc, Cron(cron_string=cronSchedule))
+        super().__init__(cal, sc, Cron(cron_string=cronSchedule))
 
         # nextEvents: {'eventTime': datetime.datetime,
         #              'func': func,
