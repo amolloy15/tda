@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+cron_converter = "*"
+python-dateutil = "*"
+schwab-py = "*"
+
+[dev-packages]
+cron_converter = "*"
+notebook = "*"
+python-dateutil = "*"
+schwab-py = "*"
+
+[requires]
+python_version = "3.13"
