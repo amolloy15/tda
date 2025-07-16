@@ -44,6 +44,8 @@ class Scheduler:
             try:
                 logger.debug(f"Running {event['func']}")
                 event['func'](*event['args'], **event['kwargs'])
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
             except Exception as e:
                 logger.error(f"error running {event['func'].__name__: {e}}")
 
