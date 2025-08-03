@@ -5,12 +5,16 @@ name = "pypi"
 
 [packages]
 cron_converter = "*"
+httpx = "*"
+pandas = "*"
 python-dateutil = "*"
 schwab-py = "*"
 
 [dev-packages]
 cron_converter = "*"
+httpx = "*"
 notebook = "*"
+pandas = "*"
 python-dateutil = "*"
 schwab-py = "*"
 
